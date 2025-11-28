@@ -1,0 +1,75 @@
+import time
+import random
+
+# --- Globale Variablen (Deklaration wie im Arduino-Code) ---
+Geschwindigkeit = 0.0  # float Geschwindigkeit;
+timea = 0.0            # float timea=0;
+timeb = 0.0            # float timeb;
+timec = 0.0            # float timec;
+a = 0                  # int a=0;
+b = 0                  # int b=0;
+
+# Konstanten für die Berechnung
+BERECHNUNGS_KONSTANTE = 1.326
+SCHWELLENWERT = 800
+
+# --- Simulierte Setup-Funktion (entspricht void setup()) ---
+def setup():
+    """Simuliert die einmalige Initialisierung."""
+    print("Starte die Geschwindigkeits-Simulations-Logik...")
+    # Serial.begin(9600) wird durch Konsolenausgabe (print) simuliert
+    
+    global timeb, timec
+    # Initialisiere die Zeitvariablen mit der aktuellen Zeit (millis() Äquivalent)
+    zeit_ms = int(time.time() * 1000)
+    timeb = zeit_ms
+    timec = zeit_ms
+
+# --- Simulierte analogRead Funktion ---
+def analogRead_simuliert(pin_name):
+    """Simuliert das Lesen eines Analogwertes (0-1023) vom Pin A0."""
+    # In einem realen Projekt müsste hier Code für ADC-Hardware stehen (z.B. GPIO-Bibliothek)
+    return random.randint(0, 1023)
+
+# --- Simulierte Loop-Funktion (entspricht void loop()) ---
+def loop():
+    """Die Hauptlogik, die unendlich wiederholt wird."""
+    global a, b, timea, timeb, timec, Geschwindigkeit
+
+    # 1. Update der alten Messwerte
+    a = b                              # a=b;
+    b = analogRead_simuliert('A0')     # b=analogRead(A0);
+
+    # 2. Geschwindigkeitsberechnung (basiert auf einem Sprung im Sensorwert)
+    # Die Bedingung if(b-a>800) prüft auf einen sehr starken Anstieg des Wertes.
+    if (b - a > SCHWELLENWERT):
+        timea = timeb                   # timea=timeb;
+        timeb = int(time.time() * 1000) # timeb=millis(); (Aktuelle Zeit in ms)
+        
+        # Berechnung: Geschwindigkeit = round(1000/(timeb-timea)*1.326);
+        zeit_diff = timeb - timea
+        if zeit_diff > 0:
+            Geschwindigkeit = round((1000 / zeit_diff) * BERECHNUNGS_KONSTANTE)
+        else:
+             Geschwindigkeit = 0.0
+            
+        print(f"Geschwindigkeit: {Geschwindigkeit}") # Serial.println(Geschwindigkeit);
+
+    # 3. Timeout-Logik (Reset oder Signal, wenn keine Messung erfolgt ist)
+    timec = int(time.time() * 1000) # timec=millis();
+
+    if ((timec - timeb) > 1000):    # if((timec-timeb)>1000)
+        # Dies signalisiert, dass seit der letzten Messung (timeb) mehr als 1000ms vergangen sind.
+        print(0)                    # Serial.println(0);
+
+    # Kurze Verzögerung, um die Loop-Wiederholungsrate zu begrenzen
+    time.sleep(0.005) # 5 Millisekunden
+
+# --- Hauptprogramm-Ausführung ---
+if __name__ == "__main__":
+    setup()
+    try:
+        while True:
+            loop()
+    except KeyboardInterrupt:
+        print("\nSimulation beendet.")
